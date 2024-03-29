@@ -8,7 +8,7 @@ extends Control
 var rng = RandomNumberGenerator.new()
 
 var container_size: Vector2
-var cell_size: Vector2 = Vector2(50, 50)
+var cell_size: Vector2 = Vector2(25, 25)
 var cell_size_modifier: Vector2 = Vector2(0.8, 0.8)
 var grid_size: Vector2
 
@@ -21,7 +21,6 @@ var cells = []
 
 func _ready():
 	container_size = get_viewport_rect().size
-	print(container_size)
 	grid_size = container_size / cell_size
 
 	tilemap.tile_set.tile_size = cell_size
