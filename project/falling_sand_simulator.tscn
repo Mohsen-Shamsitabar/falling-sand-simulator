@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3 uid="uid://doocnw64mx01u"]
+
+[ext_resource type="Script" path="res://falling_sand_simulator.gd" id="1_nkpye"]
+
+[sub_resource type="TileSet" id="TileSet_jtl2q"]
+
+[node name="FallingSandSimulator" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_nkpye")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0, 0, 0, 1)
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = SubResource("TileSet_jtl2q")
+rendering_quadrant_size = 1
+collision_visibility_mode = 2
+navigation_visibility_mode = 2
+format = 2
+
+[node name="CellContainer" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
