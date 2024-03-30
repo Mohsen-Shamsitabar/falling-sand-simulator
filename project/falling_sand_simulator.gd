@@ -14,13 +14,14 @@ var grid_size: Vector2
 
 # 0 - 359
 var color_code: float = 0.0
-var color_dif: float = 1.0
+var color_dif: float = 0.7
 
 # store "null" or "ColorRect (cell)"
 var cells = []
 
 func _ready():
 	container_size = get_viewport_rect().size
+	cell_size = Vector2(container_size.x / 80, container_size.x / 80)
 	grid_size = container_size / cell_size
 
 	tilemap.tile_set.tile_size = cell_size
@@ -48,6 +49,20 @@ func is_in_grid(cell_position: Vector2i) -> bool:
 func calc_cell_pos(x: float, y: float) -> Vector2:
 	return tilemap.map_to_local(Vector2(x, y)) - ((cell_size * cell_size_modifier) / 2.0)
 
+func add_cell(x: int, y: int):
+	var cell: ColorRect = ColorRect.new()
+	cell.size = cell_size * cell_size_modifier
+
+	# the `h` parameter is between 0-1, so we divide!
+	cell.color = Color.from_hsv(color_code / 359.0, 1, 1, 1)
+
+	var global_pos = calc_cell_pos(x, y)
+	cell.set_global_position(global_pos)
+
+	cells[x][y] = cell
+
+	cell_container.add_child(cell)
+
 func handle_input():
 	if (Input.is_action_pressed("clicked")):
 		var cell_pos: Vector2i = tilemap.local_to_map(get_global_mouse_position())
@@ -59,18 +74,7 @@ func handle_input():
 
 		if (clicked_cell == null):
 
-			var cell: ColorRect = ColorRect.new()
-			cell.size = cell_size * cell_size_modifier
-
-			# the `h` parameter is between 0-1, so we divide!
-			cell.color = Color.from_hsv(color_code / 359.0, 1, 1, 1)
-
-			var global_pos = calc_cell_pos(cell_pos.x, cell_pos.y)
-			cell.set_global_position(global_pos)
-
-			cells[cell_pos.x][cell_pos.y] = cell
-
-			cell_container.add_child(cell)
+			add_cell(cell_pos.x, cell_pos.y)
 			
 			color_code += color_dif
 			if (color_code > 359):
@@ -87,14 +91,15 @@ func move_cells():
 
 			var cell = cells[x][y]
 
-			if (not cell is ColorRect):
+			if (cell == null):
 				# is null
 				continue
 
-			var bottom_cell = cells[x][y + 1]
+			var bottom_cell = new_cells[x][y + 1]
 			
 			# first fill bottom:
-			if (not bottom_cell is ColorRect):
+			if (bottom_cell == null):
+				# cells[x][y] = null
 				new_cells[x][y] = null
 				new_cells[x][y + 1] = cells[x][y]
 
@@ -105,9 +110,10 @@ func move_cells():
 			# second handle corners:
 			
 			if (x + 1 >= grid_size.x):
-				var left_cell = cells[x - 1][y + 1]
+				var left_cell = new_cells[x - 1][y + 1]
 
-				if (not left_cell is ColorRect):
+				if (left_cell == null):
+					# cells[x][y] = null
 					new_cells[x][y] = null
 					new_cells[x - 1][y + 1] = cells[x][y]
 
@@ -116,9 +122,10 @@ func move_cells():
 					continue
 				continue
 			elif (x - 1 < 0):
-				var right_cell = cells[x + 1][y + 1]
+				var right_cell = new_cells[x + 1][y + 1]
 
-				if (not right_cell is ColorRect):
+				if (right_cell == null):
+					# cells[x][y] = null
 					new_cells[x][y] = null
 					new_cells[x + 1][y + 1] = cells[x][y]
 
@@ -129,26 +136,29 @@ func move_cells():
 			
 			# third handle both directions:
 
-			var right_cell = cells[x + 1][y + 1]
-			var left_cell = cells[x - 1][y + 1]
+			var right_cell = new_cells[x + 1][y + 1]
+			var left_cell = new_cells[x - 1][y + 1]
 			var n = rng.randf()
 
-			if (not right_cell is ColorRect and left_cell is ColorRect):
+			if (right_cell == null and left_cell != null):
+				# cells[x][y] = null
 				new_cells[x][y] = null
 				new_cells[x + 1][y + 1] = cells[x][y]
 
 				var new_pos = calc_cell_pos(x + 1, y + 1)
 				cell.set_global_position(new_pos)
 				continue
-			elif (not left_cell is ColorRect and right_cell is ColorRect):
+			elif (left_cell == null and right_cell != null):
+				# cells[x][y] = null
 				new_cells[x][y] = null
 				new_cells[x - 1][y + 1] = cells[x][y]
 
 				var new_pos = calc_cell_pos(x - 1, y + 1)
 				cell.set_global_position(new_pos)
 				continue
-			elif (not left_cell is ColorRect and not right_cell is ColorRect):
+			elif (left_cell == null and right_cell == null):
 				if (n < 0.5):
+					# cells[x][y] = null
 					new_cells[x][y] = null
 					new_cells[x - 1][y + 1] = cells[x][y]
 
@@ -156,6 +166,7 @@ func move_cells():
 					cell.set_global_position(new_pos)
 					continue
 				else:
+					# cells[x][y] = null
 					new_cells[x][y] = null
 					new_cells[x + 1][y + 1] = cells[x][y]
 
@@ -166,7 +177,5 @@ func move_cells():
 	cells = new_cells
 
 func _process(_delta):
-	if (Input.is_action_just_pressed("ui_down")):
-		printerr(cells)
 	handle_input()
 	move_cells()
